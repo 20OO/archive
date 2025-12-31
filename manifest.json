@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "PiP Anything",
+  "version": "1.0",
+  "description": "Đưa bất kỳ thành phần nào vào cửa sổ Picture-in-Picture",
+  "permissions": ["scripting", "activeTab"],
+  "action": {
+    "default_title": "Bật PiP cho Element"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}

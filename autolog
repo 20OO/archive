@@ -1,0 +1,42 @@
+#!/bin/bash
+
+PACKAGE="com.roblox.client"
+VIP_LINK="roblox://placeId=1537690962&linkCode=LINK_VIP_CUA_BAN"
+
+echo "--- DANG KICH HOAT CHE DO GIAM SAT CAO CAP ---"
+
+while true
+do
+    # 1. Kiểm tra App có sống không
+    if ! pidof $PACKAGE > /dev/null; then
+        echo "[$(date +%H:%M:%S)] Roblox dang dong. Dang khoi chay..."
+        am start -a android.intent.action.VIEW -d "$VIP_LINK"
+        sleep 100
+    else
+        # 2. KIỂM TRA LOG HE THONG (Logcat)
+        # Quét 50 dòng log cuối cùng của Roblox để tìm dấu hiệu bị văng
+        CHECK_LOG=$(logcat -d | grep -Ei "roblox|connection|disconnect|kick" | tail -n 50)
+
+        # 3. KIỂM TRA CỬA SỔ LỖI (Error Prompt)
+        # Khi bị Kick, Roblox thường hiện một cửa sổ nhỏ (Popup)
+        # Chúng ta kiểm tra xem cửa sổ hiện tại có phải là màn hình chơi game không
+        FOCUS=$(dumpsys window | grep -E 'mCurrentFocus|mFocusedApp')
+
+        if [[ "$CHECK_LOG" == *"Connection lost"* ]] || [[ "$CHECK_LOG" == *"Kicked"* ]] || [[ "$FOCUS" != *"com.roblox.client"* ]]; then
+            
+            # Kiểm tra thêm một lần nữa để tránh reset nhầm lúc đang load
+            sleep 10
+            if [[ "$FOCUS" != *"com.roblox.client"* ]]; then
+                echo "[$(date +%H:%M:%S)] PHAT HIEN BI KICK HOAC MAT KET NOI!"
+                am force-stop $PACKAGE
+                logcat -c # Xóa log cũ để lần sau check không bị trùng
+                sleep 2
+                am start -a android.intent.action.VIEW -d "$VIP_LINK"
+                sleep 100
+            fi
+        else
+            echo "[$(date +%H:%M:%S)] Trang thai: Dang Farm binh thuong..."
+        fi
+    fi
+    sleep 30
+done
